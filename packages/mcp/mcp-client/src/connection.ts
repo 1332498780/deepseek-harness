@@ -259,7 +259,14 @@ export function startConnection(ctx: Context, config: Config, policy: ResolvedRe
       { name: 'dsh-mcp-client', version: '0.0.1' },
       {
         capabilities: {},
-        versionNegotiation: { mode: 'auto' },
+        // 'auto' probes with `server/discover` (2026-07-28) before falling back to the
+        // legacy initialize handshake. Servers that answer the probe with an
+        // uncorrelated JSON-RPC error (id: null — e.g. Feishu Project / Meego MCP
+        // Server) never trigger that fallback, so the supervisor retries until the
+        // reconnect budget is exhausted and the server shows up as disconnected.
+        // 'legacy' skips the probe and speaks plain initialize, which every server
+        // supports (it is also the SDK default).
+        versionNegotiation: { mode: 'legacy' },
         listChanged: {
           tools: {
             autoRefresh: false,
